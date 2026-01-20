@@ -24,7 +24,7 @@ jobs:
         echo "✅ Syntax check passed"
         
     - name: Lint Dockerfile
-      uses: hadolint/hadolint-action@v3
+      uses: hadolint/hadolint-action@v6.1.0
       with:
         dockerfile: Dockerfile
 
