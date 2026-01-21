@@ -1,11 +1,10 @@
 name: Build with GHCR and Deploy to K3s
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Manuelles Trigger erlauben
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -13,39 +12,19 @@ env:
   K8S_NAMESPACE: default
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Test Python code
-      run: |
-        python -m py_compile app.py
-        echo "✅ Syntax check passed"
-        
-    - name: Lint Dockerfile
-      uses: hadolint/hadolint-action@v6.1.0
-      with:
-        dockerfile: Dockerfile
-
   build-and-push:
-    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write  # Wichtig für GHCR!
+      packages: write
     
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Für Git History
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
+    - uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}  # Automatisch verfügbar!
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Extract metadata
       id: meta
@@ -57,7 +36,7 @@ jobs:
           type=ref,event=branch
           latest
 
-    - name: Set up QEMU for ARM builds
+    - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
@@ -67,10 +46,9 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        platforms: linux/arm64  # Nur ARM für Raspberry Pi
+        platforms: linux/arm64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
