@@ -1,0 +1,60 @@
+name: Hamilton RPi3 Yocto Build
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Manual Trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Build Yocto Docker Image
+      run: |
+        docker build -f Dockerfile.yocto -t hamilton-yocto .
+
+    - name: Download Yocto Layers
+      run: |
+        # Poky + Layers als Git Submodules
+        git submodule add -b kirkstone git://git.yoctoproject.org/poky poky
+        git submodule add -b kirkstone git://git.yoctoproject.org/meta-raspberrypi meta-raspberrypi
+        git submodule add -b kirkstone git://git.openembedded.org/meta-openembedded meta-openembedded
+        git submodule add -b kirkstone git://git.yoctoproject.org/meta-virtualization meta-virtualization
+        git commit -m "Add Yocto layers"
+        git push
+
+    - name: Build Hamilton RPi3 Image
+      run: |
+        docker run --rm -v $(pwd):/work -w /work hamilton-yocto bash -c "
+          cd yocto/poky && 
+          source oe-init-build-env hamilton-build &&
+          cd hamilton-build &&
+          
+          # bblayers.conf (automatisch)
+          sed -i 's|yocto/meta|yocto/poky/meta|' conf/bblayers.conf
+          echo '/work/yocto/meta-raspberrypi' >> conf/bblayers.conf
+          echo '/work/yocto/meta-openembedded/meta-oe' >> conf/bblayers.conf
+          echo '/work/yocto/meta-openembedded/meta-networking' >> conf/bblayers.conf
+          echo '/work/yocto/meta-virtualization' >> conf/bblayersGoto conf/bblayers.conf
+          
+          # local.conf (Hamilton Medical)
+          echo 'MACHINE = \"raspberrypi3\"' >> conf/local.conf
+          echo 'IMAGE_INSTALL:append = \" docker containerd runc openssh htop\"' >> conf/local.conf
+          echo 'DISTRO_FEATURES:append = \" wifi bluetooth systemd virtualization\"' >> conf/local.conf
+          echo 'IMAGE_FSTYPES = \" rpi-sdimg ext4.xz\"' >> conf/local.conf
+          
+          # Build!
+          bitbake core-image-base
+        "
+
+    - name: Upload RPi3 Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: hamilton-rpi3-docker-image
+        path: |
+          yocto/poky/hamilton-build/tmp/deploy/images/raspberrypi3/*.rpi-sdimg
+          yocto/poky/hamilton-build/tmp/deploy/images/raspberrypi3/*.wic.bz2
+        retention-days: 30
+
