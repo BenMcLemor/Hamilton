@@ -110,6 +110,7 @@ jobs:
         image-ref: 'ghcr.io/benmclemor/hamilton:latest-arm'
         format: 'sarif'
         output: 'trivy-results.sarif'
+        platform: 'linux/arm64'
       env:
         # Trivy braucht oft diesen Trick, um mit Großbuchstaben in Repos umzugehen:
         TRIVY_USERNAME: ${{ github.actor }}
