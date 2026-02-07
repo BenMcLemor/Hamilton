@@ -42,6 +42,9 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        # Hier fügen wir die "lowercase" Option hinzu:
+        flavor: |
+          latest=auto
         tags: |
           type=ref,event=branch
           type=sha,prefix=,format=short
@@ -95,9 +98,13 @@ jobs:
     - name: Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ghcr.io/${{ github.repository }}:latest-arm
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm
         format: 'sarif'
         output: 'trivy-results.sarif'
+      env:
+        # Trivy braucht oft diesen Trick, um mit Großbuchstaben in Repos umzugehen:
+        TRIVY_USERNAME: ${{ github.actor }}
+        TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload Trivy scan results
       uses: github/codeql-action/upload-sarif@v2
