@@ -106,8 +106,8 @@ jobs:
     - name: Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        #image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm
-        image-ref: 'ghcr.io/benmclemor/hamilton:latest-arm'
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm
+          #image-ref: 'ghcr.io/benmclemor/hamilton:latest-arm'
         format: 'sarif'
         output: 'trivy-results.sarif'
         platform: 'linux/arm64'
