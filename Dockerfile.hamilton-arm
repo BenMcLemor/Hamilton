@@ -1,100 +1,29 @@
-# ================================================
-# HAMILTON MEDICAL: YOCTO → CONTAINER BRIDGE
-# Built directly on GitHub Actions
-# ================================================
+# STUFE 1: Build-Umgebung
+FROM alpine:3.18 AS builder
+RUN apk add --no-cache g++ make cmake
+WORKDIR /app
+COPY src/ventilator.cpp .
+# Hier wird das echte C++ Programm kompiliert
+RUN g++ -O3 ventilator.cpp -o ventilator-simulator
 
-# Use multi-stage build to simulate Yocto → Container
-FROM alpine:3.18 AS yocto-base
-
-# Medical device metadata
-LABEL org.opencontainers.image.title="Hamilton Yocto Bridge"
-LABEL org.opencontainers.image.description="Simulation of Hamilton Medical's Yocto to Container pipeline"
-LABEL org.opencontainers.image.vendor="Hamilton Medical Training"
-LABEL medical.device.type="ventilator-simulator"
-LABEL medical.safety.class="training-C"
-LABEL medical.regulatory="IEC-62304-simulation"
-
-# Install minimal packages (Yocto-like)
-RUN apk add --no-cache \
-    busybox \
-    libc6-compat \
-    tini \
-    curl \
-    && rm -rf /var/cache/apk/*
-
-# Create Hamilton directory structure
-RUN mkdir -p \
-    /etc/hamilton \
-    /var/log/ventilator \
-    /opt/hamilton/bin \
-    /usr/share/hamilton/configs
-
-# Create medical simulator service
-RUN cat > /opt/hamilton/bin/ventilator-simulator << 'SERVICE_EOF'
-#!/bin/sh
-echo "=========================================="
-echo "   HAMILTON MEDICAL VENTILATOR SIMULATOR"
-echo "=========================================="
-echo "Build: GitHub Actions ARM64"
-echo "Date: $(date)"
-echo "Architecture: $(uname -m)"
-echo "Safety Class: C (Training)"
-echo "Regulatory: IEC 62304 Simulation"
-echo "------------------------------------------"
-echo ""
-echo "Starting medical service simulation..."
-echo ""
-
-counter=0
-while true; do
-    counter=$((counter + 1))
-    echo "[$(date)] Operation $counter: Monitoring patient..."
-    
-    # Simulate different medical scenarios
-    case $((counter % 4)) in
-        0) echo "       Status: Normal breathing pattern" ;;
-        1) echo "       Status: Oxygen saturation 98%" ;;
-        2) echo "       Status: Airway pressure stable" ;;
-        3) echo "       Status: Alarm system active" ;;
-    esac
-    
-    sleep 10
-done
-SERVICE_EOF
-
-RUN chmod +x /opt/hamilton/bin/ventilator-simulator
-
-# Create health check
-RUN echo '#!/bin/sh\npgrep -f ventilator-simulator > /dev/null' > /opt/hamilton/bin/health-check \
-    && chmod +x /opt/hamilton/bin/health-check
-
-# ================================================
-# FINAL IMAGE: What would be extracted from Yocto
-# ================================================
+# STUFE 2: Das finale medizinische Image
 FROM alpine:3.18
+RUN apk add --no-cache tini busybox curl  libc6-compat
 
-# Copy "Yocto-built" applications
-COPY --from=yocto-base / /
+# Metadaten (wie vorher)
+LABEL medical.compliance="IEC-62304"
 
-# Medical device user (non-root for safety)
-RUN addgroup -g 1001 medical \
-    && adduser -D -u 1001 -G medical medicaluser
+# Ordnerstruktur
+RUN mkdir -p /etc/hamilton /opt/hamilton/bin
+WORKDIR /opt/hamilton/bin
 
-# Configuration
+# Kopiere das fertige Programm aus dem Builder
+COPY --from=builder /app/ventilator-simulator .
 COPY medical-config.yaml /etc/hamilton/config.yaml
 
-# Volumes for medical data
-VOLUME ["/var/log/ventilator"]
+# Sicherheit: Non-Root User
+RUN adduser -D medicaluser
+USER medicaluser
 
-# Health check (medical device requirement)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD /opt/hamilton/bin/health-check
-
-# Security: Run as non-root
-USER 1001:1001
-
-# Use tini as init system
 ENTRYPOINT ["/sbin/tini", "--"]
-
-# Start medical service
-CMD ["/opt/hamilton/bin/ventilator-simulator"]
+CMD ["./ventilator-simulator"]
