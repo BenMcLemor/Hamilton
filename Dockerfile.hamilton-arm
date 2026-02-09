@@ -8,7 +8,7 @@ RUN g++ -O3 ventilator.cpp -o ventilator-simulator
 
 # STUFE 2: Das finale medizinische Image
 FROM alpine:3.18
-RUN apk add --no-cache tini busybox curl  libc6-compat
+RUN apk add --no-cache tini busybox curl libstdc++ libc6-compat
 
 # Metadaten (wie vorher)
 LABEL medical.compliance="IEC-62304"
