@@ -1,20 +1,51 @@
+# Gruppe 1: Normalbetrieb
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hamilton-ventilator-deployment
+  name: hamilton-normal
 spec:
-  replicas: 3 # Startet 3 Kopien deines Simulators
+  replicas: 2
   selector:
     matchLabels:
       app: ventilator
+      test: normal
   template:
     metadata:
       labels:
         app: ventilator
+        test: normal
     spec:
       containers:
-      - name: ventilator-v1
+      - name: ventilator
         image: ghcr.io/benmclemor/hamilton:latest
-        imagePullPolicy: Always
+        env:
+        - name: TEST_SCENARIO
+          value: "NORMAL"
+        ports:
+        - containerPort: 8080
+---
+# Gruppe 2: Stress-Test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hamilton-stress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ventilator
+      test: stress
+  template:
+    metadata:
+      labels:
+        app: ventilator
+        test: stress
+    spec:
+      containers:
+      - name: ventilator
+        image: ghcr.io/benmclemor/hamilton:latest
+        env:
+        - name: TEST_SCENARIO
+          value: "STRESS_TEST"
         ports:
         - containerPort: 8080

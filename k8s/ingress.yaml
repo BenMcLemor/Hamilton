@@ -6,6 +6,7 @@ metadata:
     # Wichtig: Sagt Nginx, wie er mit dem Traffic umgehen soll
     kubernetes.io/ingress.class: nginx
 spec:
+  ingressClassName: nginx
   rules:
   - host: ventilator.local
     http:
