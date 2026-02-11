@@ -2,9 +2,9 @@
 FROM alpine:3.18 AS builder
 RUN apk add --no-cache g++ make cmake
 WORKDIR /app
-COPY src/ventilator.cpp .
+COPY src_org/* ./
 # Hier wird das echte C++ Programm kompiliert
-RUN g++ -O3 ventilator.cpp -o ventilator-simulator
+RUN make
 
 # STUFE 2: Das finale medizinische Image
 FROM alpine:3.18
