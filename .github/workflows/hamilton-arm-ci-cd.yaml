@@ -42,3 +42,6 @@ jobs:
           # Wir nutzen hier den Repository-Namen kleingeschrieben
           tags: |
             ghcr.io/${{ github.repository_owner }}/hamilton:latest
+        env:
+          # Wir stellen sicher, dass der Owner kleingeschrieben wird
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
