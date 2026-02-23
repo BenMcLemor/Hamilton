@@ -2,9 +2,18 @@
 FROM alpine:3.18 AS builder
 RUN apk add --no-cache g++ make cmake
 WORKDIR /app
-COPY src_org/* ./
+COPY src_org/ .
 # Hier wird das echte C++ Programm kompiliert
-RUN make
+#RUN make
+
+RUN ls -la
+
+# Neues Build-Verfahren mit CMake
+RUN mkdir build && cd build && \
+    cmake .. && \
+    make
+
+RUN ls -la build/
 
 # STUFE 2: Das finale medizinische Image
 FROM alpine:3.18
@@ -18,8 +27,16 @@ RUN mkdir -p /etc/hamilton /opt/hamilton/bin
 WORKDIR /opt/hamilton/bin
 
 # Kopiere das fertige Programm aus dem Builder
-COPY --from=builder /app/ventilator-simulator .
-COPY medical-config.yaml /etc/hamilton/config.yaml
+#COPY --from=builder /app/ventilator-simulator .
+#COPY medical-config.yaml /etc/hamilton/config.yaml
+
+RUN pwd
+
+# WICHTIG: Pfad an den CMake-Output anpassen
+# Falls dein executable in CMake "ventilator_app" heißt:
+COPY --from=builder /app/build/ventilator_app ./ventilator-simulator
+# Wir kopieren (falls vorhanden) die Config
+COPY src_org/medical-config.yaml /etc/hamilton/config.yaml
 
 # Sicherheit: Non-Root User
 RUN adduser -D medicaluser

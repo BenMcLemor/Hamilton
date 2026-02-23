@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-db
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: sonarqube-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-db
+spec:
+  selector:
+    matchLabels:
+      app: sonarqube-db
+  template:
+    metadata:
+      labels:
+        app: sonarqube-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        env:
+        - name: POSTGRES_USER
+          value: sonar
+        - name: POSTGRES_PASSWORD
+          value: sonar
+        - name: POSTGRES_DB
+          value: sonar
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+spec:
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: install-plugins
+        image: curlimages/curl:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            curl -L -f "https://github.com/SonarOpenCommunity/sonar-cxx/releases/download/cxx-2.2.2/sonar-cxx-plugin-2.2.2.1409.jar" -o /opt/sonarqube/extensions/plugins/sonar-cxx-plugin.jar && \
+            chmod 644 /opt/sonarqube/extensions/plugins/sonar-cxx-plugin.jar && \
+            ls -lh /opt/sonarqube/extensions/plugins/
+        volumeMounts:
+        - name: plugin-volume
+          mountPath: /opt/sonarqube/extensions/plugins
+      containers:
+      - name: sonarqube
+        image: sonarqube:community
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SONAR_JDBC_URL
+          value: jdbc:postgresql://sonarqube-db:5432/sonar
+        - name: SONAR_JDBC_USERNAME
+          value: sonar
+        - name: SONAR_JDBC_PASSWORD
+          value: sonar
+        volumeMounts:
+        - name: plugin-volume
+          mountPath: /opt/sonarqube/extensions/plugins
+      volumes:
+      - name: plugin-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-service
+spec:
+  type: NodePort
+  selector:
+    app: sonarqube
+  ports:
+    - port: 9000
+      targetPort: 9000
+      nodePort: 30005
