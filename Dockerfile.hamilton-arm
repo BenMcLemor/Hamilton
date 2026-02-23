@@ -32,11 +32,14 @@ WORKDIR /opt/hamilton/bin
 
 RUN pwd
 
+# Falls die Datei im Hauptverzeichnis ghcr-demo liegt:
+COPY medical-config.yaml /etc/hamilton/config.yaml
+
 # WICHTIG: Pfad an den CMake-Output anpassen
 # Falls dein executable in CMake "ventilator_app" heißt:
 COPY --from=builder /app/build/ventilator_app ./ventilator-simulator
 # Wir kopieren (falls vorhanden) die Config
-COPY src_org/medical-config.yaml /etc/hamilton/config.yaml
+#COPY src_org/medical-config.yaml /etc/hamilton/config.yaml || true
 
 # Sicherheit: Non-Root User
 RUN adduser -D medicaluser
