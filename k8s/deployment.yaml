@@ -18,6 +18,8 @@ spec:
       containers:
       - name: ventilator
         image: ghcr.io/benmclemor/hamilton:latest
+        command: ["/opt/hamilton/bin/ventilator-simulator"]
+        imagePullPolicy: Always
         env:
         - name: TEST_SCENARIO
           value: "NORMAL"
@@ -44,6 +46,8 @@ spec:
       containers:
       - name: ventilator
         image: ghcr.io/benmclemor/hamilton:latest
+        command: ["/opt/hamilton/bin/ventilator-simulator"]
+        imagePullPolicy: Always
         env:
         - name: TEST_SCENARIO
           value: "STRESS_TEST"
