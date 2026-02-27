@@ -24,12 +24,15 @@ public:
             oxygenLevel = 100;
         } else if (level < 0) {
             oxygenLevel = 0;
+        } else {
+            oxygenLevel = level;
         }
         
         // Fehler 5: Ein "Null Pointer" Risiko simulieren
         int* pressureSensor = nullptr;
         if (level == 50) {
-            *pressureSensor = 50; // CRASH!
+            //*pressureSensor = 50; // CRASH!
+	    std::cout << "Warning: Pressure at 50% - Check sensors." << std::endl;
         }
     }
 
