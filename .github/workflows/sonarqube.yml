@@ -41,9 +41,10 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           sonar-scanner \
+            -X \
             -Dsonar.projectKey=hamilton-ventilator \
             -Dsonar.sources=src_org \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+            -Dsonar.token="${{ secrets.SONAR_TOKEN }}" \
             -Dsonar.cxx.file.suffixes=.cpp,.hpp \
-            -Dsonar.scanner.force-deprecated-java-version=true
+            -Dsonar.scm.disabled=true
