@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   sonarqube:
@@ -13,15 +15,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Wichtig für die korrekte Zuordnung der Code-Zeilen
 
-      - name: SonarScan
+      - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           projectBaseDir: src_org
+          # Diese Argumente lösen das Problem mit dem ngrok-Tunnel
           args: >
             -Dsonar.projectKey=hamilton-ventilator
+            -Dsonar.scanner.skipVersionCheck=true
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
             -Dsonar.cxx.file.suffixes=.cpp,.hpp
+            -Dsonar.sources=.
+            -Dsonar.working.directory=/tmp/sonar
