@@ -1,0 +1,24 @@
+# Hamilton Medical Device Configuration
+# Auto-built on GitHub Actions
+
+device:
+  id: "ventilator-gh-actions-sim"
+  type: "training-simulator"
+  architecture: "arm64"
+  safety-level: "training-c"
+  
+build-info:
+  platform: "GitHub Actions"
+  source: "https://github.com/BenMcLemor/hamilton-yocto-bridge"
+  pipeline: "yocto-container-bridge"
+
+features:
+  - apnea-detection-sim
+  - pressure-monitoring
+  - alarm-system
+  - data-logging
+
+monitoring:
+  health-check-interval: 30
+  log-retention-days: 7
+  metrics-enabled: true

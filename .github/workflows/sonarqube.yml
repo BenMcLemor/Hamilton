@@ -1,0 +1,27 @@
+name: Hamilton CI Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarScan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          projectBaseDir: src_org
+          args: >
+            -Dsonar.projectKey=hamilton-ventilator
+            -Dsonar.cxx.file.suffixes=.cpp,.hpp
