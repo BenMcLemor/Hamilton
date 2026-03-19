@@ -15,16 +15,28 @@ spec:
         app: ventilator
         test: normal
     spec:
+      # --- HIER EINFÜGEN ---
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: test
+                    operator: In
+                    values:
+                      - normal
+              topologyKey: "kubernetes.io/hostname"
+      # ---------------------
       containers:
-      - name: ventilator
-        image: ghcr.io/benmclemor/hamilton:latest
-        command: ["/opt/hamilton/bin/ventilator-simulator"]
-        imagePullPolicy: Always
-        env:
-        - name: TEST_SCENARIO
-          value: "NORMAL"
-        ports:
-        - containerPort: 8080
+        - name: ventilator
+          image: ghcr.io/benmclemor/hamilton:latest
+          command: ["/opt/hamilton/bin/ventilator-simulator"]
+          imagePullPolicy: Always
+          env:
+            - name: TEST_SCENARIO
+              value: "NORMAL"
+          ports:
+            - containerPort: 8080
 ---
 # Gruppe 2: Stress-Test
 apiVersion: apps/v1
@@ -44,12 +56,12 @@ spec:
         test: stress
     spec:
       containers:
-      - name: ventilator
-        image: ghcr.io/benmclemor/hamilton:latest
-        command: ["/opt/hamilton/bin/ventilator-simulator"]
-        imagePullPolicy: Always
-        env:
-        - name: TEST_SCENARIO
-          value: "STRESS_TEST"
-        ports:
-        - containerPort: 8080
+        - name: ventilator
+          image: ghcr.io/benmclemor/hamilton:latest
+          command: ["/opt/hamilton/bin/ventilator-simulator"]
+          imagePullPolicy: Always
+          env:
+            - name: TEST_SCENARIO
+              value: "STRESS_TEST"
+          ports:
+            - containerPort: 8080
